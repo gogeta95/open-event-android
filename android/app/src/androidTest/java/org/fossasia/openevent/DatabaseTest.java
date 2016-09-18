@@ -27,6 +27,7 @@ import timber.log.Timber;
  */
 public class DatabaseTest extends AndroidTestCase {
     private final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    public static final String TAG=DatabaseTest.class.getSimpleName();
 
     private DbHelper db;
 
@@ -101,9 +102,12 @@ public class DatabaseTest extends AndroidTestCase {
 
     public void testSessionsList() throws Exception {
         DbSingleton dbSingleton = DbSingleton.getInstance();
-
+        long begin=System.nanoTime();
         assertNotNull(dbSingleton.getSessionList());
         assertTrue(dbSingleton.getSessionList().size() > 0);
+        long end =System.nanoTime();
+        long diff=end-begin;
+        System.out.println("Execution time: "+diff);
     }
 
     public void testTracksList() throws Exception {

@@ -23,6 +23,7 @@ import timber.log.Timber;
  * Created by MananWason on 24-06-2015.
  */
 public class DatabaseOperations {
+    public static final String TAG=DatabaseOperations.class.getSimpleName();
     private static final String ASCENDING = " ASC";
 
     private static final String DESCENDING = " DESC";
@@ -34,23 +35,27 @@ public class DatabaseOperations {
     private static final String EQUAL = " == ";
 
     private static final String LIKE = " LIKE ";
+    private static final String JOIN=" JOIN ";
 
     private static final String ORDERBY = " ORDER BY ";
+    private static final String ON=" on ";
 
     Event event;
 
     public ArrayList<Session> getSessionList(SQLiteDatabase mDb) {
 
-        String sortOrder = DbContract.Sessions.ID + ASCENDING;
-        Cursor cur = mDb.query(
-                DbContract.Sessions.TABLE_NAME,
-                DbContract.Sessions.FULL_PROJECTION,
-                null,
-                null,
-                null,
-                null,
-                sortOrder
-        );
+        String sortOrder = DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.ID + ASCENDING;
+
+        String query=SELECT_ALL+
+                DbContract.Sessions.TABLE_NAME +
+                JOIN+ DbContract.Microlocation.TABLE_NAME+
+                ON+
+                DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.MICROLOCATION +" = "+DbContract.Microlocation.TABLE_NAME+'.'+DbContract.Microlocation.ID+' '+
+                JOIN+DbContract.Tracks.TABLE_NAME+
+                ON+
+                DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.TRACK +" = "+DbContract.Tracks.TABLE_NAME+'.'+DbContract.Tracks.ID+ORDERBY+sortOrder;
+        Timber.tag(TAG).d(query);
+        Cursor cur = mDb.rawQuery(query,null);
 
         ArrayList<Session> sessions = new ArrayList<>();
         Session s;
@@ -58,23 +63,24 @@ public class DatabaseOperations {
         cur.moveToFirst();
         while (!cur.isAfterLast()) {
             try {
-                int microlocationId = cur.getInt(cur.getColumnIndex(DbContract.Sessions.MICROLOCATION));
-                Microlocation microlocation = new Microlocation(microlocationId, getMicroLocationById(microlocationId, mDb).getName());
-                int trackId = cur.getInt(cur.getColumnIndex(DbContract.Sessions.TRACK));
-                Track track = new Track(trackId, getTracksbyTracksId(trackId, mDb).getName());
+                int microlocationId = cur.getInt(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.MICROLOCATION));
+                Microlocation microlocation = new Microlocation(microlocationId,cur.getString(cur.getColumnIndex(DbContract.Microlocation.TABLE_NAME+'.'+DbContract.Microlocation.NAME)));
+                int trackId = cur.getInt(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.TRACK));
+                Track track = new Track(trackId,cur.getString(cur.getColumnIndex(DbContract.Tracks.TABLE_NAME+'.'+DbContract.Tracks.NAME)));
+
 
                 s = new Session(
-                        cur.getInt(cur.getColumnIndex(DbContract.Sessions.ID)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TITLE)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.SUBTITLE)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.SUMMARY)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.DESCRIPTION)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.START_TIME)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.END_TIME)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.START_DATE)),
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TYPE)),
+                        cur.getInt(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.ID)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.TITLE)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.SUBTITLE)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.SUMMARY)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.DESCRIPTION)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.START_TIME)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.END_TIME)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.START_DATE)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.TYPE)),
                         track,
-                        cur.getString(cur.getColumnIndex(DbContract.Sessions.LEVEL)),
+                        cur.getString(cur.getColumnIndex(DbContract.Sessions.TABLE_NAME+'.'+DbContract.Sessions.LEVEL)),
                         microlocation
 
                 );
